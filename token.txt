@@ -1,1 +1,3 @@
-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
+token: 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
+
+pub_key_test: 5ba98d071bb7fe9abcd9e7e3b1bf2d5664d7c87b41929c1b82f5765ae6e7bf82
