@@ -34,9 +34,10 @@ try:
         hum = hdc1080.readHumidity()
         print("-----------------")
         d = datetime.datetime.now()
+        
         if d.hour == 23:
             h = 0
-        else
+        else:
             h = d.hour+1
         
         print("Date and time: %s" %d.replace(hour=h).strftime("%c")) 
@@ -51,23 +52,25 @@ try:
         print("-----------------")
         #Preparing the tx for the BCs
         obj={
-            "temperature" : '%.2f'%temp,
-            "humidity" : '%.2f'%hum,
-            "acceleration" : '%.2f'%Az,
-            "rotation" : '%.2f'%Gz,
-            "id" : "427832FFFFFF9865FFFFFF81",
-            'date' : d.replace(hour = h).strftime("%c"),
-            'time' : int(round(time.time() * 1000)) 
+            "data" : {
+                "temperature" : '%.2f'%temp,
+                "humidity" : '%.2f'%hum,
+                "acceleration" : '%.2f'%Az,
+                "rotation" : '%.2f'%Gz,
+                "id" : "427832FFFFFF9865FFFFFF81",
+                'date' : d.replace(hour = h).strftime("%c"),
+                'time' : int(round(time.time() * 1000))
+            },
+            "public_key" : "5ba98d071bb7fe9abcd9e7e3b1bf2d5664d7c87b41929c1b82f5765ae6e7bf82"
         }
         GPIO.output(LED_PIN, True)
         time.sleep(5)
-        data_json = json.dump(obj, file)
-        url = 'http://192.168.4.34:3000/api/add_tx' #Address of the function on the api server
+        url = 'http://172.20.10.2:3000/api/send_tx' #Address of the function on the api server
         headers = {'Content-type' : 'application/json', 'Accept' : 'text/plain'}
         r = requests.post(url, data=json.dumps(obj), headers=headers)
         time.sleep(5)
         GPIO.output(LED_PIN, False)
-        time.sleep(120)
+        time.sleep(60)
 
 except:
     #os.system("python3 read_data.py")
