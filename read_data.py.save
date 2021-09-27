@@ -1,0 +1,94 @@
+# -*- coding: utf-8 -*-
+import json
+import sys   
+import os       
+import time
+import datetime
+import SDL_Pi_HDC1080
+import MPU_6050
+import RPi.GPIO as GPIO
+import requests
+
+GPIO.setmode(GPIO.BCM)
+LED_PIN = 17
+
+ 
+GPIO.setup(LED_PIN, GPIO.OUT)
+
+
+GPIO.output(LED_PIN, True)
+time.sleep(0.5)
+GPIO.output(LED_PIN, False)
+time.sleep(0.5)
+GPIO.output(LED_PIN, True)
+time.sleep(0.5)
+GPIO.output(LED_PIN, False)
+time.sleep(0.5)
+
+print (" Reading Data of Gyroscope, Accelerometer, Temperature and Humidity")
+
+hdc1080 = SDL_Pi_HDC1080.SDL_Pi_HDC1080()
+mpu6050 = MPU_6050.MPU_6050()
+
+counter = 1
+
+mine = os.popen('ifconfig wlan0 | grep "inet 192" | cut -c 14-25')
+myip = mine.read()
+
+time.sleep(5)
+try:
+    while True:
+        time.sleep(10)
+        GPIO.setwarnings(False)
+        GPIO.output(LED_PIN, True)
+        
+        #Reading value of temperature and humidity
+        temp = hdc1080.readTemperature()
+        time.sleep(1)
+        hum = hdc1080.readHumidity()
+        print("-----------------")
+        print("Temperature = %3.1f C" % temp)
+        print("Humidity = %3.1f %%" % hum)
+        print("")
+        
+        #Reading value of accelerometer and gyroscope
+        Ax, Ay, Az = mpu6050.read_acc()
+        Gx, Gy, Gz = mpu6050.read_gyro()
+        print ("Gx=%.2f" %Gx, u'\u00b0'+ "/s", "\tGy=%.2f" %Gy, u'\u00b0'+ "/s", "\tGz=%.2f" %Gz, u'\u00b0'+ "/s", "\tAx=%.2f g" %Ax, "\tAy=%.2f g" %Ay, "\tAz=%.2f g" %Az)     
+        print("-----------------")
+        
+        #Preparing the tx for the BCs
+        obj={
+            "temperature" : '%.2f'%temp,
+            "humi                "humidity" : '%.2f'%hum
+            },
+            "data_3" : {
+                "id_sens" : "Acc",
+                "acceleration_x" : '%.2f'%Ax,
+                "acceleration_y" : '%.2f'%Ay,
+                "acceleration_z" : '%.2f'%Az,
+            },
+            "data_4" : {
+                "id_sens" : "Gyro",
+                "rotation_x" : '%.2f'%Gx,
+                "rotation_y" : '%.2f'%Gy,
+                "rotation_z" : '%.2f'%Gz,
+            },
+            "counter" : counter,
+            "id_core" : "pi4_1",
+            "id_base" : "437832FFFFFF9865FFFFFF81"
+        }
+        
+        counter += 1
+        #Writing to a json file and sending to the js routine
+        with open("data.json", 'w') as file:
+            data_json = json.dump(obj, file) #Only write on file
+            url = 'http://192.168.4.28:3000/api/add_tx' #Address of the function on the api server
+            headers = {'Content-type' : 'application/json', 'Accept' : 'text/plain'}
+            r = requests.post(url, data=json.dumps(obj), headers=headers)
+            
+except:
+    os.system("python3 read_data.py")
+    GPIO.output(LED_PIN, False)
+    GPIO.cleanup()
+
