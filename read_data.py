@@ -64,7 +64,6 @@ try:
             "public_key" : "5ba98d071bb7fe9abcd9e7e3b1bf2d5664d7c87b41929c1b82f5765ae6e7bf82"
         }
         GPIO.output(LED_PIN, True)
-        time.sleep(5)
         url = 'http://172.20.10.2:3000/api/send_tx' #Address of the function on the api server
         headers = {'Content-type' : 'application/json', 'Accept' : 'text/plain'}
         r = requests.post(url, data=json.dumps(obj), headers=headers)
